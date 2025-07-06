@@ -1,0 +1,26 @@
+_format_version: "3.0"
+_transform: true
+
+# In api-gateway/kong.yaml
+services:
+  - name: user-service
+    protocol: http
+    host: host.docker.internal # Change this line
+    port: 8002                # Change this line
+    routes:
+      - name: user-service-route
+        paths:
+          - /users
+
+plugins:
+  - name: key-auth
+    config:
+      key_names:
+        - apikey
+
+consumers:
+  - username: my-app
+
+keyauth_credentials:
+  - consumer: my-app
+    key: my-super-secret-key

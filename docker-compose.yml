@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  kong-gateway:
+    image: kong:latest
+    container_name: kong-gateway
+    # In your docker-compose.yml under kong-gateway:
+    # In docker-compose.yml, inside kong-gateway service:
+    environment:
+      KONG_DATABASE: 'off'
+      KONG_DECLARATIVE_CONFIG: /kong-config/kong.yaml
+      KONG_PROXY_LISTEN: 0.0.0.0:8000
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+      KONG_UPSTREAM_USER_SERVICE_URL: http://user-service:8000 # Add this line
+    volumes:
+      - ./api-gateway:/kong-config
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+
+  user-service:
+    build:
+      context: ./services/user-service
+    container_name: user-service
+    networks:
+      - custom-network
+    ports:
+      - "8002:8000"
+
+  lead-service:
+    build:
+      context: ./services/lead-service
+    container_name: lead-service
+    networks:
+      - custom-network
+
+networks:
+  custom-network:
+    driver: bridge
