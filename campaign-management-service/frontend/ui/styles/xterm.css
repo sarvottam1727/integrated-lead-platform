@@ -1,0 +1,17 @@
+/* src/styles/xterm.css */
+.xterm {
+  cursor: text;
+  position: relative;
+  user-select: none;
+  -ms-user-select: none;
+  -webkit-user-select: none;
+}
+.xterm.focus, .xterm:focus {
+  outline: none;
+}
+.xterm .xterm-helpers {
+  position: absolute;
+  top: 0;
+  z-index: 5;
+}
+/* Add more styles as needed */

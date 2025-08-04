@@ -1,0 +1,28 @@
+contacts:
+  cwd: contact-management-service
+  cmd: ["venv/Scripts/python.exe", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8002"]
+  health_url: "http://localhost:8002/health"
+
+campaigns:
+  cwd: campaign-management-service/backend
+  cmd: ["venv/Scripts/python.exe", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8005"]
+  health_url: "http://localhost:8005/health"
+
+email:
+  cwd: email-service
+  cmd: ["venv/Scripts/python.exe", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8003"]
+  health_url: "http://localhost:8003/health"
+
+indiamart:
+  cwd: indiamart-connector
+  cmd: ["venv/Scripts/python.exe", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8011"]
+  health_url: "http://localhost:8011/health"
+
+lead_worker:
+  cwd: lead-processing-service
+  cmd: ["venv/Scripts/python.exe", "main.py"]
+
+tracking:
+  cwd: tracking-service
+  cmd: ["venv/Scripts/python.exe", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8007"]
+  health_url: "http://localhost:8007/health"

@@ -1,0 +1,16 @@
+/* src/styles/ReactToastify.css */
+.Toastify__toast-container {
+  z-index: 9999;
+  -webkit-transform: translate3d(0, 0, 9999px);
+  transform: translate3d(0, 0, 9999px);
+  position: fixed;
+  padding: 4px;
+  width: 320px;
+  box-sizing: border-box;
+  color: #fff;
+}
+.Toastify__toast-container--top-left {
+  top: 1em;
+  left: 1em;
+}
+/* Add more styles as needed */
