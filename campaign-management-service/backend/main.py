@@ -143,22 +143,6 @@ app.add_middleware(
 # --- Helpers ---
 
 
-@app.get("/contacts")
-async def get_contacts(request: Request, page: int = Query(1, ge=1), per_page: int = Query(50, ge=1, le=100)):
-    offset = (page - 1) * per_page
-    pool = request.app.state.db_pool
-    async with pool.connection() as conn:
-        async with conn.cursor(row_factory=dict_row) as cur:
-            await cur.execute(
-                "SELECT id,name,email,phone_number,company_name,subscribed,created_at "
-                "FROM contacts ORDER BY id LIMIT %s OFFSET %s",
-                (per_page, offset)
-            )
-            contacts = await cur.fetchall()
-            await cur.execute("SELECT COUNT(*) AS c FROM contacts")
-            total = (await cur.fetchone())["c"]
-    return {"contacts": contacts, "total": total}
-
 async def get_contacts_by_ids(pool, ids):
     if not ids:
         return []
