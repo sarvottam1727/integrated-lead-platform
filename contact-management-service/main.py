@@ -16,6 +16,9 @@ from dotenv import load_dotenv
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/campaign_db")
 
+if os.name == "nt":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 # Structured logging & metrics
 tuple_processors = [
     structlog.processors.TimeStamper(fmt="iso"),
