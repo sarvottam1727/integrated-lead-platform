@@ -7,3 +7,5 @@ venv/
 # IDE specific
 .vscode/
 .idea/
+# Secrets
+email-service/token.json
