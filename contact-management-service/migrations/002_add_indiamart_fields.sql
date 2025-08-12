@@ -1,0 +1,4 @@
+ALTER TABLE contacts
+    ADD COLUMN IF NOT EXISTS unique_query_id TEXT,
+    ADD COLUMN IF NOT EXISTS city TEXT,
+    ADD COLUMN IF NOT EXISTS state TEXT;

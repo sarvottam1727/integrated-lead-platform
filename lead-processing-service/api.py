@@ -27,6 +27,9 @@ class LeadIn(BaseModel):
     SENDER_NAME: Optional[str] = ""
     SENDER_MOBILE: Optional[str] = ""
     SENDER_COMPANY: Optional[str] = ""
+    UNIQUE_QUERY_ID: Optional[str] = ""
+    CITY: Optional[str] = ""
+    STATE: Optional[str] = ""
 
 # --- rabbit helper
 def _get_channel():
@@ -98,6 +101,9 @@ async def upload_csv(file: UploadFile = File(...)):
         name  = (row.get("name") or "").strip()
         phone = (row.get("phone") or "").strip()
         comp  = (row.get("company") or "").strip()
+        uqid  = (row.get("unique_query_id") or row.get("UNIQUE_QUERY_ID") or "").strip()
+        city  = (row.get("city") or row.get("CITY") or "").strip()
+        state = (row.get("state") or row.get("STATE") or "").strip()
 
         if not email:
             errors.append({"line": line_no, "error": "Missing email"})
@@ -107,7 +113,10 @@ async def upload_csv(file: UploadFile = File(...)):
             "SENDER_EMAIL":   email,
             "SENDER_NAME":    name,
             "SENDER_MOBILE":  phone,
-            "SENDER_COMPANY": comp
+            "SENDER_COMPANY": comp,
+            "UNIQUE_QUERY_ID": uqid,
+            "CITY":           city,
+            "STATE":          state,
         })
 
     if not leads and errors:

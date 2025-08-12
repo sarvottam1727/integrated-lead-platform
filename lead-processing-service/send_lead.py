@@ -10,7 +10,10 @@ lead = {
     "SENDER_NAME": "John Doe",
     "SENDER_EMAIL": "john.doe@example.com",
     "SENDER_MOBILE": "9876543210",
-    "SENDER_COMPANY": "Acme Corp"
+    "SENDER_COMPANY": "Acme Corp",
+    "UNIQUE_QUERY_ID": "TEST123",
+    "CITY": "Mumbai",
+    "STATE": "MH",
 }
 
 channel.basic_publish(
