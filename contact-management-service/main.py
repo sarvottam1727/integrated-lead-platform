@@ -119,6 +119,9 @@ class ContactCreate(BaseModel):
     email: EmailStr
     phone_number: Optional[str] = None
     company_name: Optional[str] = None
+    unique_query_id: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
 
     @field_validator("name")
     def validate_name(cls, v: str) -> str:
@@ -131,6 +134,9 @@ class ContactUpdate(BaseModel):
     email: Optional[EmailStr] = None
     phone_number: Optional[str] = None
     company_name: Optional[str] = None
+    unique_query_id: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
     dnc: Optional[bool] = None
 
     @field_validator("name")
@@ -145,6 +151,9 @@ class Contact(BaseModel):
     email: EmailStr
     phone_number: Optional[str]
     company_name: Optional[str]
+    unique_query_id: Optional[str]
+    city: Optional[str]
+    state: Optional[str]
     dnc: bool
     created_at: datetime
     updated_at: datetime
@@ -224,9 +233,17 @@ async def create_contact(contact: ContactCreate, request: Request):
             async with conn.cursor(row_factory=dict_row) as cur:
                 try:
                     await cur.execute(
-                        "INSERT INTO contacts (name,email,phone_number,company_name) "
-                        "VALUES (%s,%s,%s,%s) RETURNING *",
-                        (contact.name, contact.email, contact.phone_number, contact.company_name),
+                        "INSERT INTO contacts (name,email,phone_number,company_name,unique_query_id,city,state) "
+                        "VALUES (%s,%s,%s,%s,%s,%s,%s) RETURNING *",
+                        (
+                            contact.name,
+                            contact.email,
+                            contact.phone_number,
+                            contact.company_name,
+                            contact.unique_query_id,
+                            contact.city,
+                            contact.state,
+                        ),
                     )
                     new = await cur.fetchone()
                     await broadcast(request.app, "contacts_added", {"created_count": 1})
@@ -350,9 +367,17 @@ async def batch_create_contacts(contacts: List[ContactCreate], request: Request)
                 for c in contacts:
                     try:
                         await cur.execute(
-                            "INSERT INTO contacts (name,email,phone_number,company_name) "
-                            "VALUES (%s,%s,%s,%s)",
-                            (c.name, c.email, c.phone_number, c.company_name),
+                            "INSERT INTO contacts (name,email,phone_number,company_name,unique_query_id,city,state) "
+                            "VALUES (%s,%s,%s,%s,%s,%s,%s)",
+                            (
+                                c.name,
+                                c.email,
+                                c.phone_number,
+                                c.company_name,
+                                c.unique_query_id,
+                                c.city,
+                                c.state,
+                            ),
                         )
                         success += 1
                     except Exception as e:

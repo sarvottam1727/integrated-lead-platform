@@ -34,6 +34,7 @@ const toWsURL = (httpUrl, path) => {
 const PERSONALIZATION_TOKENS = [
   '{{ contact.name }}',
   '{{ contact.email }}',
+  '{{ contact.phone }}',
   '{{ contact.city }}',
   '{{ contact.state }}',
   '{{ contact.company }}',
@@ -160,7 +161,13 @@ const CampaignManager = React.memo(function CampaignManager() {
     if (query.trim()) {
       const q = query.toLowerCase();
       list = list.filter(c =>
-        (c.name?.toLowerCase().includes(q)) || (c.email?.toLowerCase().includes(q))
+        (c.name?.toLowerCase().includes(q)) ||
+        (c.email?.toLowerCase().includes(q)) ||
+        (c.phone_number?.toLowerCase().includes(q)) ||
+        (c.company_name?.toLowerCase().includes(q)) ||
+        (c.city?.toLowerCase().includes(q)) ||
+        (c.state?.toLowerCase().includes(q)) ||
+        (c.unique_query_id?.toLowerCase().includes(q))
       );
     }
     return list;
@@ -290,9 +297,10 @@ const CampaignManager = React.memo(function CampaignManager() {
     return tpl
       .replaceAll('{{ contact.name }}', contact.name ?? '')
       .replaceAll('{{ contact.email }}', contact.email ?? '')
+      .replaceAll('{{ contact.phone }}', contact.phone ?? contact.phone_number ?? '')
       .replaceAll('{{ contact.city }}', contact.city ?? '')
       .replaceAll('{{ contact.state }}', contact.state ?? '')
-      .replaceAll('{{ contact.company }}', contact.company ?? '');
+      .replaceAll('{{ contact.company }}', contact.company ?? contact.company_name ?? '');
   }, []);
 
   // Unsubscribe helper
@@ -473,6 +481,11 @@ const CampaignManager = React.memo(function CampaignManager() {
               </TableCell>
               <TableCell>Loading...</TableCell>
               <TableCell>Loading...</TableCell>
+              <TableCell>Loading...</TableCell>
+              <TableCell>Loading...</TableCell>
+              <TableCell>Loading...</TableCell>
+              <TableCell>Loading...</TableCell>
+              <TableCell>Loading...</TableCell>
               <TableCell>
                 <Button disabled>Loading...</Button>
               </TableCell>
@@ -480,7 +493,7 @@ const CampaignManager = React.memo(function CampaignManager() {
           ))}
           {!loading && listForTable && listForTable.length === 0 && (
             <TableRow>
-              <TableCell colSpan={4} sx={{ color: '#ff8585', textAlign: 'center' }}>
+              <TableCell colSpan={9} sx={{ color: '#ff8585', textAlign: 'center' }}>
                 No contacts available. Please ingest or retry.
               </TableCell>
             </TableRow>
@@ -505,6 +518,11 @@ const CampaignManager = React.memo(function CampaignManager() {
           </TableCell>
           <TableCell sx={{ color: '#fff' }}>{row.name}</TableCell>
           <TableCell sx={{ color: '#fff' }}>{row.email}</TableCell>
+          <TableCell sx={{ color: '#fff' }}>{row.phone_number}</TableCell>
+          <TableCell sx={{ color: '#fff' }}>{row.company_name}</TableCell>
+          <TableCell sx={{ color: '#fff' }}>{row.city}</TableCell>
+          <TableCell sx={{ color: '#fff' }}>{row.state}</TableCell>
+          <TableCell sx={{ color: '#fff' }}>{row.unique_query_id}</TableCell>
           <TableCell>
             <Box display="flex" gap={1}>
               <Button
@@ -572,7 +590,7 @@ const CampaignManager = React.memo(function CampaignManager() {
                 <TextField
                   inputRef={searchRef}
                   size="small"
-                  placeholder="Search name or email…"
+                  placeholder="Search name, email, phone, company, city, state, or ID…"
                   onChange={(e) => setQuery(e.target.value)}
                   inputProps={{ 'aria-label': 'Search contacts' }}
                   sx={{ minWidth: 240 }}
@@ -636,6 +654,21 @@ const CampaignManager = React.memo(function CampaignManager() {
                       Email
                     </TableCell>
                     <TableCell sx={{ bgcolor: 'rgba(255,255,255,0.06)', color: '#c3d7ff', fontWeight: 700 }}>
+                      Phone
+                    </TableCell>
+                    <TableCell sx={{ bgcolor: 'rgba(255,255,255,0.06)', color: '#c3d7ff', fontWeight: 700 }}>
+                      Company
+                    </TableCell>
+                    <TableCell sx={{ bgcolor: 'rgba(255,255,255,0.06)', color: '#c3d7ff', fontWeight: 700 }}>
+                      City
+                    </TableCell>
+                    <TableCell sx={{ bgcolor: 'rgba(255,255,255,0.06)', color: '#c3d7ff', fontWeight: 700 }}>
+                      State
+                    </TableCell>
+                    <TableCell sx={{ bgcolor: 'rgba(255,255,255,0.06)', color: '#c3d7ff', fontWeight: 700 }}>
+                      Unique ID
+                    </TableCell>
+                    <TableCell sx={{ bgcolor: 'rgba(255,255,255,0.06)', color: '#c3d7ff', fontWeight: 700 }}>
                       Actions
                     </TableCell>
                   </TableRow>
@@ -669,7 +702,7 @@ const CampaignManager = React.memo(function CampaignManager() {
 
             {/* Token palette */}
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1 }}>
-              {['{{ contact.name }}','{{ contact.email }}','{{ contact.company }}','{{ contact.city }}','{{ contact.state }}','{{ unsubscribe }}'].map(tok => (
+              {['{{ contact.name }}','{{ contact.email }}','{{ contact.phone }}','{{ contact.company }}','{{ contact.city }}','{{ contact.state }}','{{ unsubscribe }}'].map(tok => (
                 <Button
                   key={tok}
                   size="small"

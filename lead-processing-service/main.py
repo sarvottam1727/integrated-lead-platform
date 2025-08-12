@@ -404,11 +404,13 @@ def parse_lead(body: bytes) -> Dict[str, Any] | None:
         return None
 
     lead = {
-        "name":         (record.get("SENDER_NAME")    or "").strip(),
-        "email":        email,
-        "phone_number": (record.get("SENDER_MOBILE")  or "").strip(),
-        "company_name": (record.get("SENDER_COMPANY") or "").strip(),
-        # If your contacts service supports DNC/subscribed or extra fields, add here.
+        "unique_query_id": (record.get("UNIQUE_QUERY_ID") or "").strip(),
+        "name":           (record.get("SENDER_NAME")    or "").strip(),
+        "email":          email,
+        "phone_number":   (record.get("SENDER_MOBILE")  or "").strip(),
+        "company_name":   (record.get("SENDER_COMPANY") or "").strip(),
+        "city":           (record.get("CITY")          or "").strip(),
+        "state":          (record.get("STATE")         or "").strip(),
     }
     return lead
 
