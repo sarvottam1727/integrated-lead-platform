@@ -7,3 +7,4 @@ structlog>=24.1
 pydantic-settings>=2.3
 python-dotenv>=1.0
 prometheus-client>=0.20
+httpx>=0.26

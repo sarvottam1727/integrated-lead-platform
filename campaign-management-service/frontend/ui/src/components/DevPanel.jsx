@@ -8,6 +8,7 @@ import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import debounce from 'lodash.debounce';
 import { Card, PageContainer } from './Common';
+import AIWriter from './AIWriter';
 import '@xterm/xterm/css/xterm.css';
 
 const cfg = {
@@ -206,6 +207,9 @@ const DevPanel = React.memo(function DevPanel() {
         Live Logs: {logSource || 'None'}
       </Typography>
       <Card elevation={0} ref={terminalRef} sx={{ p: 1.5, mt: 1 }} />
+      <Box sx={{ mt: 4 }}>
+        <AIWriter />
+      </Box>
     </PageContainer>
   );
 });

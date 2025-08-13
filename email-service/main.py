@@ -12,6 +12,9 @@ from typing import Optional, List, Dict, Any, Tuple
 from urllib.parse import quote
 from email.mime.text import MIMEText
 
+import hashlib
+import sqlite3
+import httpx
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr, Field
@@ -54,6 +57,11 @@ class Settings(BaseSettings):
     # Concurrency for batch endpoint (kept low by design)
     max_parallel_sends: int = int(os.getenv("EMAIL_MAX_PARALLEL_SENDS", "3"))
 
+    # LLM copy generation
+    llm_api_url: str = os.getenv("LLM_API_URL", "https://api.openai.com/v1/chat/completions")
+    llm_api_key: str = os.getenv("LLM_API_KEY", "")
+    llm_model: str = os.getenv("LLM_MODEL", "gpt-3.5-turbo")
+
     class Config:
         env_file = ".env"
 
@@ -78,6 +86,14 @@ send_counter = Counter(
 send_latency = Histogram(
     "email_service_send_seconds", "Latency for sending an email"
 )
+
+# Cache database for AI copy suggestions
+DB_PATH = os.getenv("EMAIL_COPY_DB", "email_copy_cache.db")
+copy_db = sqlite3.connect(DB_PATH, check_same_thread=False)
+copy_db.execute(
+    "CREATE TABLE IF NOT EXISTS email_copy_cache (key TEXT PRIMARY KEY, response TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"
+)
+copy_db.commit()
 
 # ───────────────────────────────── Helpers ─────────────────────────────────
 
@@ -254,6 +270,62 @@ class BatchResult(BaseModel):
     failed: int
     results: List[Dict[str, Any]]
 
+
+class CopyRequest(BaseModel):
+    prompt: str
+    contact: Dict[str, Any] = Field(default_factory=dict)
+
+
+class CopyResponse(BaseModel):
+    text: str
+
+# ───────────────────────────────── LLM Copy Generation ─────────────────────────────────
+
+def _cache_key(prompt: str, contact: Dict[str, Any]) -> str:
+    payload = json.dumps({"p": prompt, "c": contact}, sort_keys=True)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+async def _get_cached_copy(key: str) -> Optional[str]:
+    def _inner():
+        cur = copy_db.execute("SELECT response FROM email_copy_cache WHERE key=?", (key,))
+        row = cur.fetchone()
+        return row[0] if row else None
+
+    return await asyncio.to_thread(_inner)
+
+
+async def _set_cached_copy(key: str, text: str) -> None:
+    def _inner():
+        copy_db.execute(
+            "INSERT OR REPLACE INTO email_copy_cache(key, response) VALUES (?, ?)",
+            (key, text),
+        )
+        copy_db.commit()
+
+    await asyncio.to_thread(_inner)
+
+
+async def call_llm(prompt: str, contact: Dict[str, Any]) -> str:
+    if not settings.llm_api_key:
+        raise HTTPException(status_code=500, detail="LLM API key not configured")
+
+    payload = {
+        "model": settings.llm_model,
+        "messages": [
+            {"role": "system", "content": "You are a helpful email copywriting assistant."},
+            {"role": "user", "content": f"{prompt}\n\nContact: {json.dumps(contact)}"},
+        ],
+    }
+
+    headers = {"Authorization": f"Bearer {settings.llm_api_key}"}
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        resp = await client.post(settings.llm_api_url, json=payload, headers=headers)
+        resp.raise_for_status()
+        data = resp.json()
+
+    return data.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+
 # ───────────────────────────────── Gmail Send Logic ─────────────────────────────────
 
 def build_message_html(email_data: EmailSchema) -> str:
@@ -426,6 +498,20 @@ async def auth_reset():
         return {"status": "ok", "message": "Token cleared"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Reset failed: {e}")
+
+
+@app.post("/generate-copy", response_model=CopyResponse, tags=["AI"])
+async def generate_copy(req: CopyRequest):
+    """Return suggested email text from an LLM, caching responses."""
+    request_counter.labels(endpoint="/generate-copy", method="POST").inc()
+    key = _cache_key(req.prompt, req.contact)
+    cached = await _get_cached_copy(key)
+    if cached:
+        return {"text": cached}
+
+    suggestion = await call_llm(req.prompt, req.contact)
+    await _set_cached_copy(key, suggestion)
+    return {"text": suggestion}
 
 @app.post("/send-email", tags=["Email"])
 async def send_email(email: EmailSchema):
